@@ -2,8 +2,8 @@ package io.github.xahdy.apiCidades.service
 
 
 import io.github.xahdy.apiCidades.domain.Estado
+import io.github.xahdy.apiCidades.dto.CreateEstadoRequest
 import io.github.xahdy.apiCidades.repository.EstadoRepository
-import io.quarkus.hibernate.orm.panache.kotlin.PanacheQuery
 import javax.enterprise.context.Dependent
 
 
@@ -11,8 +11,20 @@ import javax.enterprise.context.Dependent
 open class EstadoService(
     private val repository: EstadoRepository
 ) {
-    fun cadastrar(estado: Estado) = repository.persist(estado)
+    fun cadastrar(createEstadoRequest: CreateEstadoRequest): Estado {
+        val estado = Estado()
+        estado.nome = createEstadoRequest.nome
+        repository.persist(estado)
+        return estado
+    }
     fun listarEstadoId(estadoId: Long) = repository.findById(estadoId)
     fun listarTodos() = repository.findAll()
-
+    fun atualizarEstado(estadoId: Long, createEstadoRequest: CreateEstadoRequest): Estado? {
+        var estadoAtualizado = repository.findById(estadoId)
+        estadoAtualizado?.nome = createEstadoRequest.nome
+        return estadoAtualizado
+    }
+    fun deletar(estadoId: Long){
+        repository.deleteById(estadoId)
+    }
 }
