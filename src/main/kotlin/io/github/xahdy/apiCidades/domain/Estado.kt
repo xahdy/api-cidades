@@ -5,10 +5,12 @@ import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
 
+
 @Entity
-data class Estado (
+data class Estado(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val  id :Long,
-    val  nome: String
-        )
+    val id: Long? = null,
+    var nome: String? = null
+
+)

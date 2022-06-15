@@ -1,12 +1,12 @@
 package io.github.xahdy.apiCidades.resource
 
 import io.github.xahdy.apiCidades.domain.Estado
+import io.github.xahdy.apiCidades.dto.CreateEstadoRequest
 import io.github.xahdy.apiCidades.service.EstadoService
-import javax.ws.rs.Consumes
-import javax.ws.rs.POST
-import javax.ws.rs.Path
-import javax.ws.rs.Produces
+import javax.transaction.Transactional
+import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
 
 @Path("/estados")
@@ -16,7 +16,21 @@ class EstadoResource(private val service: EstadoService) {
 
 
     @POST
-    fun cadastrar(estado: Estado){
-        return service.cadastrar(estado)
+    @Transactional
+    fun cadastrar(createEstadoRequest: CreateEstadoRequest): Response {
+        val estado = Estado()
+        estado.nome = createEstadoRequest.nome
+        service.cadastrar(estado)
+        return Response.status(Response.Status.CREATED.statusCode).entity(estado).build();
     }
+
+    @GET
+    @Path("{estadoId}")
+    fun listarPorId(@PathParam("estadoId") estadoId: Long): Response =
+        Response.ok(service.listarEstadoId(estadoId)).build()
+
+
+    @GET
+    fun listarTodos(): Response = Response.ok(service.listarTodos().list()).build()
+
 }
