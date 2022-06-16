@@ -18,17 +18,31 @@ class EstadoResource(private val service: EstadoService) {
     @Path("{estadoId}")
     fun listarEstadoPorId(
         @PathParam("estadoId") estadoId: Long
-    ) = Response.ok(service.listarEstadoId(estadoId)).build()
+    ) = try {
+        val estado = service.listarEstadoId(estadoId)
+        Response.ok(estado).build()
+    } catch (e: NotFoundException) {
+        Response.status(Response.Status.NOT_FOUND.statusCode).entity(e).build()
+    }
 
     @GET
-    fun listarTodos() = Response.ok(service.listarTodosEstados().list()).build()
+    fun listarTodos() = try {
+        val estados = service.listarTodosEstados()
+        Response.ok(estados).build()
+    } catch (e: NotFoundException) {
+        Response.status(Response.Status.NOT_FOUND.statusCode).entity(e).build()
+    }
 
     @POST
     @Transactional
     fun cadastrarEstado(
         @Valid createEstadoRequest: CreateEstadoRequest
-    ) = Response.status(Response.Status.CREATED.statusCode)
-        .entity(service.cadastrarEstado(createEstadoRequest)).build();
+    ) = try {
+        Response.status(Response.Status.CREATED.statusCode)
+            .entity(service.cadastrarEstado(createEstadoRequest)).build()
+    } catch (e: RuntimeException) {
+        Response.status(Response.Status.BAD_REQUEST.statusCode).entity(e).build()
+    }
 
     @PUT
     @Path("{estadoId}")
@@ -36,14 +50,25 @@ class EstadoResource(private val service: EstadoService) {
     fun atualizarEstadoPorId(
         @PathParam("estadoId") estadoId: Long,
         @Valid createEstadoRequest: CreateEstadoRequest
-    ) = Response.ok(service.atualizarEstado(estadoId, createEstadoRequest)).build()
+    ) =
+        try {
+            Response.ok(service.atualizarEstado(estadoId, createEstadoRequest)).build()
+        } catch (e: RuntimeException) {
+            Response.status(Response.Status.NOT_FOUND.statusCode).entity(e).build()
+        } catch (e: NotFoundException) {
+            Response.status(Response.Status.NOT_FOUND.statusCode).entity(e).build()
+        }
 
     @DELETE
     @Path("{estadoId}")
     @Transactional
-    fun deletarEstadoPorId(@PathParam("estadoId") estadoId: Long) {
-        service.deletarEstado(estadoId)
-        Response.noContent().build()
-    }
-
+    fun deletarEstadoPorId(
+        @PathParam("estadoId") estadoId: Long
+    ) =
+        try {
+            service.deletarEstado(estadoId)
+            Response.noContent().build()
+        } catch (e: NotFoundException) {
+            Response.status(Response.Status.NOT_FOUND.statusCode).entity(e).build()
+        }
 }

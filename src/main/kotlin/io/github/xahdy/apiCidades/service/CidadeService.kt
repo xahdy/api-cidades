@@ -5,7 +5,6 @@ import io.github.xahdy.apiCidades.domain.mapper.CidadeMapper
 import io.github.xahdy.apiCidades.dto.CidadeResponse
 import io.github.xahdy.apiCidades.dto.CreateCidadeRequest
 import io.github.xahdy.apiCidades.repository.CidadeRepository
-import io.quarkus.panache.common.Parameters
 import javax.enterprise.context.Dependent
 
 @Dependent
@@ -16,59 +15,50 @@ open class CidadeService(
 ) {
 
     fun listarTodasCidadesEstado(estadoId: Long): List<CidadeResponse> {
+        estadoService.listarEstadoId(estadoId)
 
-        val queryCidadesPorEstado = repository.find("estado_id =:estadoId", paramsEstado(estadoId))
-        val listCidadesPorEstado = queryCidadesPorEstado.list()
+        val listCidadesPorEstado = repository.encontrarTodasCidadesEstado(estadoId)
         return listCidadesPorEstado.map { t -> cidadeResponseMapper.map(t) }
     }
 
     fun listarCidadeId(estadoId: Long, cidadeId: Long): CidadeResponse {
-        val queryCidade = repository.find(
-            "estado_id =:estadoId and id =:cidadeId", paramsEstadoCidade(estadoId, cidadeId)
-        )
-        if(queryCidade.list().isEmpty()){
-            throw IllegalArgumentException("Id informado não corresponde a nenhum dado cadastrado")
-        }
-        val cidadeSelecionada = queryCidade.list()[0]
-        return cidadeResponseMapper.map(cidadeSelecionada)
+        val cidadeListar = repository.encontrarCidadePorEstadoIdCidadeId(estadoId, cidadeId)
+        return cidadeResponseMapper.map(cidadeListar)
     }
 
     fun cadastrarCidade(estadoId: Long, createCidadeRequest: CreateCidadeRequest): Cidade {
         val estado = estadoService.listarEstadoId(estadoId)
+
         val cidade = Cidade()
         cidade.nome = createCidadeRequest.nome
         cidade.estadoId = estado
+        val cidadeNome = cidade.nome
+        val cidadeEstadoId = cidade.estadoId
+        if (cidadeNome != null && cidadeEstadoId != null) {
+            repository.encontrarPorCidadeNomeEstadoId(cidadeNome, cidadeEstadoId)
+        }
         repository.persist(cidade)
         return cidade
     }
 
     fun atualizarCidade(estadoId: Long, cidadeId: Long, createCidadeRequest: CreateCidadeRequest): CidadeResponse {
 
-        val queryCidade = repository.find(
-            "estado_id =:estadoId and id =:cidadeId", paramsEstadoCidade(estadoId, cidadeId)
-        )
-        val listCidade = queryCidade.list()
-        val cidadeSelecionada = listCidade[0]
-        cidadeSelecionada.nome = createCidadeRequest.nome
-        return cidadeResponseMapper.map(cidadeSelecionada)
+        val cidadeAtualizar = repository.encontrarCidadePorEstadoIdCidadeId(estadoId, cidadeId)
+
+        val cidadeNome = createCidadeRequest.nome
+        val cidadeEstadoId = cidadeAtualizar.estadoId
+        if (cidadeNome != null && cidadeEstadoId != null) {
+            repository.encontrarPorCidadeNomeEstadoId(cidadeNome, cidadeEstadoId)
+        }
+
+        cidadeAtualizar.nome = createCidadeRequest.nome
+        return cidadeResponseMapper.map(cidadeAtualizar)
     }
 
     fun deletarCidade(estadoId: Long, cidadeId: Long) {
-        val cidadeDeletar = repository.find("estado_id =:estadoId and id =:cidadeId", paramsEstadoCidade(estadoId, cidadeId))
-        if(cidadeDeletar.list().isEmpty()){
-            throw IllegalArgumentException("Id informado não corresponde a nenhum dado cadastrado")
-        }
-        repository.delete(cidadeDeletar.list()[0])
+        val cidadeDeletar = repository.encontrarCidadePorEstadoIdCidadeId(estadoId, cidadeId)
+        repository.delete(cidadeDeletar)
     }
-
-    fun paramsEstadoCidade(estadoId: Long, cidadeId: Long) =
-        Parameters.with("estadoId", estadoId)
-            .and("cidadeId", cidadeId)
-            .map()
-
-    fun paramsEstado(estadoId: Long) =
-        Parameters.with("estadoId", estadoId)
-            .map()
 
 
 }
