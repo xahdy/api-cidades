@@ -3,6 +3,7 @@ package io.github.xahdy.apiCidades.resource
 import io.github.xahdy.apiCidades.dto.CreateEstadoRequest
 import io.github.xahdy.apiCidades.service.EstadoService
 import javax.transaction.Transactional
+import javax.validation.Valid
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
@@ -15,33 +16,33 @@ class EstadoResource(private val service: EstadoService) {
 
     @GET
     @Path("{estadoId}")
-    fun listarPorId(
+    fun listarEstadoPorId(
         @PathParam("estadoId") estadoId: Long
     ) = Response.ok(service.listarEstadoId(estadoId)).build()
 
     @GET
-    fun listarTodos() = Response.ok(service.listarTodos().list()).build()
+    fun listarTodos() = Response.ok(service.listarTodosEstados().list()).build()
 
     @POST
     @Transactional
-    fun cadastrar(
-        createEstadoRequest: CreateEstadoRequest
+    fun cadastrarEstado(
+        @Valid createEstadoRequest: CreateEstadoRequest
     ) = Response.status(Response.Status.CREATED.statusCode)
-        .entity(service.cadastrar(createEstadoRequest)).build();
+        .entity(service.cadastrarEstado(createEstadoRequest)).build();
 
     @PUT
     @Path("{estadoId}")
     @Transactional
-    fun atualizarPorId(
+    fun atualizarEstadoPorId(
         @PathParam("estadoId") estadoId: Long,
-        createEstadoRequest: CreateEstadoRequest
+        @Valid createEstadoRequest: CreateEstadoRequest
     ) = Response.ok(service.atualizarEstado(estadoId, createEstadoRequest)).build()
 
     @DELETE
     @Path("{estadoId}")
     @Transactional
-    fun deletarPorId(@PathParam("estadoId") estadoId: Long) {
-        service.deletar(estadoId)
+    fun deletarEstadoPorId(@PathParam("estadoId") estadoId: Long) {
+        service.deletarEstado(estadoId)
         Response.noContent().build()
     }
 

@@ -11,20 +11,23 @@ import javax.enterprise.context.Dependent
 open class EstadoService(
     private val repository: EstadoRepository
 ) {
-    fun cadastrar(createEstadoRequest: CreateEstadoRequest): Estado {
+    fun cadastrarEstado(createEstadoRequest: CreateEstadoRequest): Estado {
+
         val estado = Estado()
         estado.nome = createEstadoRequest.nome
         repository.persist(estado)
         return estado
     }
+
     fun listarEstadoId(estadoId: Long) = repository.findById(estadoId)
-    fun listarTodos() = repository.findAll()
+    fun listarTodosEstados() = repository.findAll()
     fun atualizarEstado(estadoId: Long, createEstadoRequest: CreateEstadoRequest): Estado? {
         var estadoAtualizado = repository.findById(estadoId)
         estadoAtualizado?.nome = createEstadoRequest.nome
         return estadoAtualizado
     }
-    fun deletar(estadoId: Long){
+
+    fun deletarEstado(estadoId: Long) {
         repository.deleteById(estadoId)
     }
 }
