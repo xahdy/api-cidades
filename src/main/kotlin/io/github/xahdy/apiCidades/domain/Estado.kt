@@ -12,7 +12,8 @@ import javax.persistence.Table
 data class Estado(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
-    var nome: String? = null
+    val id: Long = -1,
+    var nome: String = "",
+    var sigla: String = ""
 
 )
