@@ -1,5 +1,6 @@
 package io.github.xahdy.apiCidades.resource
 
+import io.github.xahdy.apiCidades.core.formatar
 import io.github.xahdy.apiCidades.core.get
 import io.github.xahdy.apiCidades.dto.CreateEstadoRequest
 import io.github.xahdy.apiCidades.repository.EstadoRepository
@@ -43,9 +44,7 @@ class EstadoResource(
         val page = Page.of(pagina, maxResults)
         try {
             return Response.ok(repository[page, campo, busca]).build()
-        } catch (e: IllegalArgumentException) {
-            return Response.status(Response.Status.NOT_FOUND).entity(e).build()
-        } catch (e: PersistenceException) {
+        } catch (e: RuntimeException) {
             return Response.status(Response.Status.NOT_FOUND).entity(e).build()
         }
     }
@@ -75,8 +74,8 @@ class EstadoResource(
     ) = try {
         val estado = repository[estadoId]
 
-        val nomeFormatado = createEstadoRequest.formatar(createEstadoRequest.nome)
-        val siglaFormatado = createEstadoRequest.formatar(createEstadoRequest.sigla)
+        val nomeFormatado = formatar(createEstadoRequest.nome)
+        val siglaFormatado = formatar(createEstadoRequest.sigla)
 
         repository.countDuplicados(nomeFormatado, siglaFormatado)
         estado.nome = nomeFormatado

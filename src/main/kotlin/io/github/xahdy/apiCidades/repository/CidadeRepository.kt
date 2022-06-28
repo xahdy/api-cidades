@@ -9,39 +9,13 @@ import javax.enterprise.context.ApplicationScoped
 @ApplicationScoped
 class CidadeRepository : PanacheRepository<Cidade> {
 
-    fun encontrarCidadePorEstadoIdCidadeId(estadoId: Long, cidadeId: Long): Cidade {
-        val params = Parameters.with("estadoId", estadoId)
-            .and("cidadeId", cidadeId)
+    fun countDuplicados(cidadeNome: String, estado: Estado) {
+        val params = Parameters.with("cidadeNome", cidadeNome.lowercase())
+            .and("estado", estado)
             .map()
-
-        val cidadeEncontrada =
-            find("estado_id =:estadoId and id =:cidadeId", params)
-        if (cidadeEncontrada.list().isEmpty()) {
-            throw IllegalArgumentException("Cidade não encontrada")
+        val contador = count(query = "LOWER(nome) =:cidadeNome and LOWER (estado) =:estado", params = params).toInt()
+        if (contador != 0 ) {
+            throw IllegalArgumentException("Duplicado")
         }
-        return cidadeEncontrada.list()[0]
-    }
-
-    fun encontrarTodasCidadesEstado(estadoId: Long): List<Cidade> {
-        val params = Parameters.with("estadoId", estadoId)
-            .map()
-        val queryCidadesPorEstado = find("estado_id =:estadoId", params)
-        if (queryCidadesPorEstado.list().isEmpty()) {
-            throw IllegalArgumentException("nenhuma cidade cadastrada")
-        }
-        return queryCidadesPorEstado.list()
-    }
-
-    fun encontrarPorCidadeNomeEstadoId(cidadeNome: String, estadoId: Estado?): Cidade? {
-        val params = Parameters.with("cidadeNome", cidadeNome)
-            .and("estadoId", estadoId)
-            .map()
-        val queryCidadeNome = find("nome =:cidadeNome and estado_id =:estadoId", params)
-
-        if (queryCidadeNome.firstResult() == null) {
-            return queryCidadeNome.firstResult()
-        }
-        throw RuntimeException("Essa cidade já existe.")
-
     }
 }

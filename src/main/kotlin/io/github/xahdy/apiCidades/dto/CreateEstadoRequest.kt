@@ -1,7 +1,7 @@
 package io.github.xahdy.apiCidades.dto
 
+import io.github.xahdy.apiCidades.core.formatar
 import io.github.xahdy.apiCidades.domain.Estado
-import java.util.*
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
@@ -33,17 +33,5 @@ data class CreateEstadoRequest(
         sigla = formatar(sigla)
     )
 
-    internal fun formatar(str: String): String {
-        return str.trim().split("\\s+".toRegex())
-            .joinToString(" ")
-//        deprecated
-//        { it.capitalize() }
-            {
-                it.replaceFirstChar {
-                    if (it.isLowerCase())
-                        it.titlecase(Locale.getDefault())
-                    else it.toString()
-                }
-            }
-    }
+
 }

@@ -1,55 +1,60 @@
 package io.github.xahdy.apiCidades.resource
 
+import io.github.xahdy.apiCidades.core.formatar
+import io.github.xahdy.apiCidades.core.get
+import io.github.xahdy.apiCidades.dto.CidadeResponse
 import io.github.xahdy.apiCidades.dto.CreateCidadeRequest
-import io.github.xahdy.apiCidades.service.CidadeService
+import io.github.xahdy.apiCidades.repository.CidadeRepository
+import io.github.xahdy.apiCidades.repository.EstadoRepository
+import java.net.URI
 import javax.transaction.Transactional
 import javax.validation.Valid
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
+import javax.ws.rs.core.UriInfo
 
-@Path("/estados/{estadoId}/cidades")
+@Path("/cidades/")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-class CidadeResource(private val service: CidadeService) {
-
+class CidadeResource(
+    private val repository: CidadeRepository,
+    private val estadoRepository: EstadoRepository,
+    private val info: UriInfo
+) {
     @GET
-    fun listarTodasCidadesPorEstado(@PathParam("estadoId") estadoId: Long) =
-        try {
-            val todasCidades = service.listarTodasCidadesEstado(estadoId)
-            Response.ok(todasCidades).build()
-        } catch (e: NotFoundException) {
-            Response.status(Response.Status.NOT_FOUND.statusCode).entity(e).build()
-        } catch (e: IllegalArgumentException) {
-            Response.status(Response.Status.NOT_FOUND.statusCode).entity(e).entity(e).build()
-        }
+    fun listarTodasCidades() = Response.ok(repository.findAll().list().map { CidadeResponse(it) }).build()
 
     @GET
     @Path("{cidadeId}")
     fun listarCidadePorId(
-        @PathParam("estadoId") estadoId: Long,
         @PathParam("cidadeId") cidadeId: Long
-    ) = try {
-        val cidade = service.listarCidadeId(estadoId, cidadeId)
-        Response.ok(cidade).build()
-    } catch (e: IllegalArgumentException) {
-        Response.status(Response.Status.NOT_FOUND.statusCode).entity(e).build()
-    }
+    ) =  Response.ok(repository[cidadeId]).build()
+//        Response.ok(CidadeResponse().todasCidades(repository[cidadeId])).build()
+
+
 
 
     @POST
     @Transactional
     fun cadastrarCidade(
-        @PathParam("estadoId") estadoId: Long,
         @Valid createCidadeRequest: CreateCidadeRequest
-    ) = try {
-        val cidade = service.cadastrarCidade(estadoId, createCidadeRequest)
-        Response.status(Response.Status.CREATED.statusCode)
-            .entity(cidade).build()
-    } catch (e: NotFoundException) {
-        Response.status(Response.Status.NOT_FOUND.statusCode).entity(e).entity(e).build()
-    } catch (e: RuntimeException) {
-        Response.status(Response.Status.BAD_REQUEST.statusCode).entity(e).build()
+    ): Response? {
+        try {
+            val estado = estadoRepository.cidadeEncontrarEstado(createCidadeRequest.estado)
+
+            val cidade =
+                createCidadeRequest.create(
+                    estado = estado
+                )
+            repository.countDuplicados(formatar(createCidadeRequest.nome), estado)
+            repository.persist(cidade)
+
+            val uri = URI.create(info.path.plus(cidade.id))
+            return Response.created(uri).entity(cidade).build()
+        } catch (e: IllegalArgumentException) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.message).build()
+        }
     }
 
 
@@ -57,29 +62,30 @@ class CidadeResource(private val service: CidadeService) {
     @Path("{cidadeId}")
     @Transactional
     fun atualizarEstadoPorId(
-        @PathParam("estadoId") estadoId: Long,
         @PathParam("cidadeId") cidadeId: Long,
         @Valid createCidadeRequest: CreateCidadeRequest
-    ) = try {
-        val cidade = service.atualizarCidade(estadoId, cidadeId, createCidadeRequest)
-        Response.ok(cidade).build()
-    } catch (e: IllegalArgumentException) {
-        Response.status(Response.Status.NOT_FOUND.statusCode).entity(e).build()
-    } catch (e: RuntimeException) {
-        Response.status(Response.Status.BAD_REQUEST.statusCode).entity(e).build()
+    ): Response {
+        val cidade = repository[cidadeId]
+        val estado = estadoRepository.cidadeEncontrarEstado(createCidadeRequest.estado)
+        val nomeFormatado = formatar(createCidadeRequest.nome)
+
+
+        cidade.nome = nomeFormatado
+        cidade.estado = estado
+
+        return Response.ok(cidade).build()
     }
+
 
 
     @DELETE
     @Path("{cidadeId}")
     @Transactional
     fun deletarCidade(
-        @PathParam("estadoId") estadoId: Long,
         @PathParam("cidadeId") cidadeId: Long
-    ) = try {
-        service.deletarCidade(estadoId, cidadeId)
-        Response.noContent().build()
-    } catch (e: IllegalArgumentException) {
-        Response.status(Response.Status.NOT_FOUND.statusCode).entity(e).build()
+    ): Response {
+        repository.deleteById(cidadeId)
+        return Response.noContent().build()
     }
 }
+

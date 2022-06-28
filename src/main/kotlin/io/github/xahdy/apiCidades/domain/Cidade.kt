@@ -4,12 +4,12 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "cidades")
-data class Cidade (
+data class Cidade(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
-    var nome: String? = null,
+    val id: Long = -1,
+    var nome: String = "",
     @ManyToOne
     @JoinColumn(name = "estado_id")
-    var estadoId: Estado? = null
+    var estado: Estado? = null
 )
